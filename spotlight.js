@@ -11,7 +11,7 @@ exports = module.exports = Spotlight;
  * Shared objects.
  */
 
-// Maps `NotificationObserver` classes to their `Spotlight` counterpart.
+// Maps `NotificationObserver` instances to their `Spotlight` counterpart.
 var observers = {};
 
 // Some core classes expect an `NSAutoreleasePool` on the stack.
