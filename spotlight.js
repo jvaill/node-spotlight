@@ -53,7 +53,7 @@ function NSString(string) {
  */
 
 // Called for each search result.
-Spotlight.searchResultCallback = null;
+Spotlight.resultCallback = null;
 
 // Interval to tick the native event loop.
 Spotlight.prototype.eventLoopInterval = null;
@@ -62,8 +62,7 @@ Spotlight.prototype.eventLoopInterval = null;
  * Initialize a `Spotlight`.
  */
 
-function Spotlight(searchResultCallback) {
-  this.searchResultCallback = searchResultCallback;
+function Spotlight() {
   this.metadata = $.NSMetadataQuery('alloc')('init')('autorelease');
 
   // Create an `NotificationObserver`.
@@ -128,6 +127,7 @@ Spotlight.prototype.setQuery = function(query) {
  */
 
 Spotlight.prototype.start = function() {
+  this.startEventLoop();
   this.metadata('startQuery');
 };
 
@@ -137,14 +137,16 @@ Spotlight.prototype.start = function() {
 
 Spotlight.prototype.stop = function() {
   this.metadata('stopQuery');
+  this.stopEventLoop();
 };
 
 /*
  * Searches using the given `query`. See `Spotlight.setQuery` for its format.
  */
 
-Spotlight.prototype.search = function(query) {
-  this.startEventLoop();
+Spotlight.prototype.search = function(query, callback) {
+  this.resultCallback = callback;
+  this.metadata('stopQuery');
   this.setQuery(query);
   this.start();
 };
@@ -160,6 +162,7 @@ Spotlight.prototype.queryDidUpdate = function(ins, sel, notification) {};
  */
 
 Spotlight.prototype.queryDidFinishGathering = function(ins, sel, notification) {
+  // Stop the query, the single pass is completed.
   this.stop();
 
   // Loop through results.
@@ -170,10 +173,8 @@ Spotlight.prototype.queryDidFinishGathering = function(ins, sel, notification) {
     var displayName = result('valueForAttribute', NSString('kMDItemDisplayName'));
 
     // Call the callback with the result.
-    if (typeof this.searchResultCallback == 'function') {
-      this.searchResultCallback(displayName);
+    if (typeof this.resultCallback == 'function') {
+      this.resultCallback(displayName);
     }
   }
-
-  this.stopEventLoop();
 };
